@@ -41,7 +41,7 @@ async def library_command(ctx):
     folders = manager.get_folders()
     if folders:
         folder_list = "\n".join([f"{folder[0]}: {folder[1]}" for folder in folders])
-        await ctx.send(f"Berikut adalah folder yang tersedia:\n{folder_list}")
+        await ctx.send(f"Berikut adalah folder yang sudah ada:\n{folder_list}")
     else:
         await ctx.send("Belum ada folder yang tersedia. Silakan tambahkan folder terlebih dahulu.")
 
@@ -51,7 +51,6 @@ class SaveButton(discord.ui.View):
         self.folder_id = folder_id
         self.question = question
         self.answer = answer
-
     @discord.ui.button(label="Save", style=discord.ButtonStyle.green)
     async def save_button(self, interaction, button):
         manager.add_card(
@@ -59,36 +58,23 @@ class SaveButton(discord.ui.View):
             self.question,
             self.answer
         )
-
         await interaction.response.edit_message(
-            content="✅ Flashcard berhasil disimpan!",
+            content="✅ Card berhasil disimpan!",
             view=None
         )
 
 @bot.command(name='add_cards')
 async def add_cards_command(ctx, folder_id: int):
-
-    await ctx.send("Masukkan pertanyaan flashcard:")
-
+    await ctx.send("Masukkan pertanyaan card:")
     def check(message):
         return message.author == ctx.author and message.channel == ctx.channel
-
-    question_message = await bot.wait_for(
-        "message",
-        check=check
+    question_message = await bot.wait_for("message", check=check
     )
-
     question = question_message.content
-
-    await ctx.send("Masukkan jawaban flashcard:")
-
-    answer_message = await bot.wait_for(
-        "message",
-        check=check
+    await ctx.send("Masukkan jawaban card:")
+    answer_message = await bot.wait_for("message", check=check
     )
-
     answer = answer_message.content
-
     await ctx.send(
         f"**Pertanyaan:** {question}\n"
         f"**Jawaban:** {answer}\n\n"
@@ -110,21 +96,17 @@ class QuizView(discord.ui.View):
                 ephemeral=True
             )
             return
-
         card = manager.get_random_card(self.folder_id)
-
         if not card:
             await interaction.response.edit_message(
-                content="Tidak ada flashcard di folder ini.",
+                content="Tidak ada card di folder ini.",
                 view=None
             )
             return
-
         await interaction.response.edit_message(
             content=f"Pertanyaan: berikutnya:",
             view=None
         )
-
         await ask_question(self.ctx, self.folder_id, card)
 
     @discord.ui.button(label="Quit Answering", style=discord.ButtonStyle.danger)
@@ -135,32 +117,22 @@ class QuizView(discord.ui.View):
                 ephemeral=True
             )
             return
-
         await interaction.response.edit_message(
             content="Quiz dihentikan.",
             view=None
         )
-
 async def ask_question(ctx, folder_id, card):
-
     question = card[2]
     correct_answer = card[3]
-
     await ctx.send(f"Pertanyaan: **{question}**")
-
     def check(message):
         return (
             message.author == ctx.author
             and message.channel == ctx.channel
         )
-
-    answer_message = await bot.wait_for(
-        "message",
-        check=check
+    answer_message = await bot.wait_for("message", check=check
     )
-
     user_answer = answer_message.content
-
     if user_answer.lower().strip() == correct_answer.lower().strip():
         result = "✅ Jawaban benar!"
     else:
@@ -168,7 +140,6 @@ async def ask_question(ctx, folder_id, card):
             f"❌ Jawaban salah!\n"
             f"Jawaban yang benar: **{correct_answer}**"
         )
-
     await ctx.send(
         result,
         view=QuizView(ctx, folder_id)
@@ -176,14 +147,10 @@ async def ask_question(ctx, folder_id, card):
 
 @bot.command(name='play')
 async def play_command(ctx, folder_id: int):
-
     card = manager.get_random_card(folder_id)
-
     if not card:
         await ctx.send("Belum ada flashcard di folder ini.")
         return
-
     await ask_question(ctx, folder_id, card)
-
 
 bot.run(TOKEN)
